@@ -1,14 +1,15 @@
+import pymongo
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-import pymongo
-import sys
 
-import LevelUrls.LevelUrls as lu
+import utils.LevelUrls as lu
+
 
 def log(str):
-    with open("url.text","a") as f:
+    with open("../url.text", "a") as f:
         f.write(str)
+
 
 class ACLUrlsCrawler:
     def __init__(self):
@@ -185,9 +186,18 @@ class ACLUrlsCrawler:
     def finishFlag(self):
         db = self.client[self.database]
         col = db[self.finishflag]
-        col.insert_one({"finish":True})
+        col.insert_one({"finish": True})
 
+    def updateUrl(self, url):
+        '''
+            已经爬过的url更新数据库的visit标记
+        :param url:
+        :return:
+        '''
+        db = self.client[self.database]
+        col = db[self.collection]
+        col.update_one({"url": url}, {"$set": {"visit": True}})
 
-if __name__ == '__main__':
-    aclscrawler = ACLUrlsCrawler()
-    print(aclscrawler.getACLUrls())
+# if __name__ == '__main__':
+#     aclscrawler = ACLUrlsCrawler()
+#     print(aclscrawler.getACLUrls())

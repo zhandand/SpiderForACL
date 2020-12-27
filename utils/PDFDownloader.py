@@ -1,11 +1,15 @@
-import requests
 import pymongo
-import LevelUrls.LevelUrls as lu
+import requests
+from tqdm import tqdm
+
+import utils.LevelUrls as lu
+
 
 class PDFManager():
     '''
     爬取论文pdf
     '''
+
     def __init__(self):
         self.database = "ACLAnthology"
         self.collection = "PDF"
@@ -62,11 +66,14 @@ class PDFManager():
         return
 
     def run(self):
-        for pdfurl in self.pdfUrls:
+        pbar = tqdm(self.pdfUrls)
+        for pdfurl in pbar:
             try:
+                pbar.set_description("Crawling %s" % pdfurl)
                 pdfurlSplit = pdfurl.split("/")
-                fileName = pdfurlSplit[len(pdfurlSplit)-1]
-                self.downloadFile(pdfurl,fileName)
+                fileName = pdfurlSplit[len(pdfurlSplit) - 1]
+                self.downloadFile(pdfurl, fileName)
+                self.updateUrl(pdfurl)
             except Exception as e:
-                lu.ErrorUrlManeger(pdfurl,e)
+                lu.ErrorUrlManeger(pdfurl, e)
         print("PDF downloading done")

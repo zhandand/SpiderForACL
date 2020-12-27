@@ -1,11 +1,13 @@
 import pymongo
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+
 
 class ContentManager():
     '''
     爬取论文的基本内容
     '''
+
     def __init__(self):
         self.database = "ACLAnthology"
         self.collection = "ACLAnthology"
@@ -26,7 +28,7 @@ class ContentManager():
     def parse(self,content):
         soup = BeautifulSoup(content,'lxml')
         title = soup.title.string
-        print(title)
+        # print(title)
         citation_author_raw = soup.find_all('meta')
         citation_authors = []
         for citation_author in citation_author_raw:
@@ -122,6 +124,7 @@ class ContentManager():
         :param url:
         :return:
         '''
-        paperInfo =  self.parse(url)
+
+        paperInfo = self.parse(self.get_content(url))
         self.savePaperInfo(paperInfo)
         return paperInfo

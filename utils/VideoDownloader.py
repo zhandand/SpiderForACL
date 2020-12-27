@@ -1,13 +1,12 @@
-import os
 import requests
-import pymongo
+
 
 class VideoManager():
     '''
     爬取论文视频
     '''
+
     def __init__(self):
-        # self.siteUrls = siteUrls
         self.database = "ACLAnthology"
         self.collection = "Video"
         self.client = pymongo.MongoClient("mongodb://localhost:27017/")
@@ -27,7 +26,7 @@ class VideoManager():
         :param url:
         :return:
         '''
-        if(url ==""):
+        if (url == ""):
             return
         db = self.client[self.database]
         col = db[self.collection]
@@ -35,13 +34,23 @@ class VideoManager():
             col.insert_one({"url": url, "visit": False})
         return
 
-    def getVideoUrlFromVimeo(self,siteUrl):
+    def updateUrl(self, url):
+        '''
+            已经爬过的pdf更新数据库的visit标记
+        :param url:
+        :return:
+        '''
+        db = self.client[self.database]
+        col = db[self.collection]
+        col.update_one({"url": url}, {"$set": {"visit": True}})
+
+    def getVideoUrlFromVimeo(self, siteUrl):
         '''
         :param siteUrl:https://vimeo.com/ 网站中的视频链接 例如 https://vimeo.com/383950369
         :return: 对应视频资源的url和视频格式
         '''
         headers = {
-           "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36",
             "x-requested-with": "XMLHttpRequest"
         }
         r = requests.get(siteUrl, headers=headers)

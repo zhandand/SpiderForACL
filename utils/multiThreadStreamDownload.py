@@ -1,14 +1,13 @@
-import os
+import threading
+
 import requests
-from time import time
+import threadpool
 # from multiprocessing.pool import ThreadPool
 from clint.textui import progress
-import threading
-import threadpool
-from urllib import parse
 
 num = 0
 lock = threading.Lock()
+
 
 def getVideoUrl(siteUrl):
     '''
