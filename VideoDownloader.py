@@ -3,6 +3,9 @@ import requests
 import pymongo
 
 class VideoManager():
+    '''
+    爬取论文视频
+    '''
     def __init__(self):
         # self.siteUrls = siteUrls
         self.database = "ACLAnthology"
@@ -18,12 +21,14 @@ class VideoManager():
         col = db[self.collection]
         return [url['url'] for url in col.find({"visit": False})]
 
-    def addUrls(self,url):
+    def addUrl(self,url):
         '''
             加入待爬取的视频的url
         :param url:
         :return:
         '''
+        if(url ==""):
+            return
         db = self.client[self.database]
         col = db[self.collection]
         if col.find_one({"url": url}) == None:

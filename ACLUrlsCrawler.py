@@ -24,17 +24,18 @@ class ACLUrlsCrawler:
         self.collection = "Urls"  # 爬取的url将要保存的表名
         self.finishflag = "finish" #爬取url结束后保存的表名，有内容表明可以直接从数据库中读，否则爬取url
         self.client = pymongo.MongoClient("mongodb://localhost:27017/")
-        # self.ACLUlrs = self.getUrlsfromTopLevel(self.baseUrl+"/anthology/")
 
     def getACLUrls(self):
+        ACLUlrs = []
         if self.checkIfhasScrawl():
             # 已经爬取过，从数据库中获取未爬取过的url
-            return self.getUnvisitedUrls()
+            ACLUlrs +=  self.getUnvisitedUrls()
         else:
             # 爬取所有论文的url并保存在数据库中
             print("start to crawl paper urls...")
-            ACLUlrs = self.getUrlsfromTopLevel(self.baseUrl + "/anthology/")
-            return ACLUlrs
+            ACLUlrs += self.getUrlsfromTopLevel(self.baseUrl + "/anthology/")
+        print("urls downloading done")
+        return ACLUlrs
 
     def get_content(self, url):
         try:

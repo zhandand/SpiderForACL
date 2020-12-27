@@ -3,6 +3,9 @@ import pymongo
 import LevelUrls.LevelUrls as lu
 
 class PDFManager():
+    '''
+    爬取论文pdf
+    '''
     def __init__(self):
         self.database = "ACLAnthology"
         self.collection = "PDF"
@@ -50,6 +53,8 @@ class PDFManager():
         :param url:
         :return:
         '''
+        if(url == ""):
+            return
         db = self.client[self.database]
         col = db[self.collection]
         if col.find_one({"url":url})==None:
