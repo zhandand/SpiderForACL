@@ -22,11 +22,11 @@ class ACLScrawler:
             try:
                 pbar.set_description("Crawling %s" % url)
                 # 爬取并保存论文基本内容
-                paperInfo = self.contenManager.run(url)
+                pdfUrl, videoUrl = self.contenManager.run(url)
                 # 加入待爬取的pdf url
-                self.pdfManager.addUrl(paperInfo['pdfUrl'])
+                self.pdfManager.addUrl(pdfUrl)
                 # 加入待爬取的视频 url
-                self.videoManager.addUrl(paperInfo['videoUrl'])
+                self.videoManager.addUrl(videoUrl)
                 # 爬取数据后更新url visit字段
                 self.urlScrawler.updateUrl(url)
             except Exception as e:

@@ -120,11 +120,11 @@ class ContentManager():
 
     def run(self,url):
         '''
-            爬取，保存并返回论文基本内容
+            爬取，保存并返回论文pdf url和视频 url
         :param url:
         :return:
         '''
 
         paperInfo = self.parse(self.get_content(url))
         self.savePaperInfo(paperInfo)
-        return paperInfo
+        return paperInfo['pdfUrl'], paperInfo['videoUrl']

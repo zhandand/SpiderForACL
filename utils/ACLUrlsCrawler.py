@@ -132,7 +132,7 @@ class ACLUrlsCrawler:
             secondLevelManager.updateSecondLevelUrls(secondLevelUrl)
             paperUrls += partUrls
 
-        log("total paper in site:{length}\n".format(length=len(paperUrls)))
+        log("total paper in site:{length}\n".format(length=len(self.getACLUrls())))
         self.finishFlag()
         # print("total:{}".foramt(len(paperUrls)))
         return paperUrls
@@ -180,6 +180,17 @@ class ACLUrlsCrawler:
         db = self.client[self.database]
         col = db[self.collection]
         urls = col.find({"visit": False}, {"url": 1})
+        urls = [url['url'] for url in urls]
+        return urls
+
+    def getAllUrls(self):
+        '''
+            获取数据库中所有的url
+            :return:
+        '''
+        db = self.client[self.database]
+        col = db[self.collection]
+        urls = col.find({}, {"url": 1})
         urls = [url['url'] for url in urls]
         return urls
 
