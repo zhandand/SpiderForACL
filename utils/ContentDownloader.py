@@ -104,6 +104,7 @@ class ContentManager():
         if (col.find_one({"title": paperInfo["title"]}) != None):
             return
 
+        # todo: _id
         col.insert_one(paperInfo)
 
     def updateUrl(self,url):
@@ -117,8 +118,11 @@ class ContentManager():
         col.update_one({"url": url}, {"$set": {"visit": True}})
         # col.update_many({}, {"$set": {"visit": False}})
 
+    def get_id(self):
+        db = self.client[self.database]
+        col = db[self.collection]
 
-    def run(self,url):
+    def run(self, url):
         '''
             爬取，保存并返回论文pdf url和视频 url
         :param url:

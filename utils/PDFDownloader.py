@@ -13,6 +13,7 @@ class PDFManager():
     def __init__(self):
         self.database = "ACLAnthology"
         self.collection = "PDF"
+        self.ACLAnthology = "ACLAnthology"
         self.client = pymongo.MongoClient("mongodb://localhost:27017/")
         self.pdfUrls = self.getPDFUrlsfromDB()
 
@@ -41,7 +42,7 @@ class PDFManager():
                     f.write(chunk)
         return
 
-    def updateUrl(self,url):
+    def updateUrl(self, url, filePath):
         '''
             已经爬过的pdf更新数据库的visit标记
         :param url:
@@ -49,15 +50,28 @@ class PDFManager():
         '''
         db = self.client[self.database]
         col = db[self.collection]
+        ACLAnthology = db[self.ACLAnthology]
+        # visit标记设为true
         col.update_one({"url": url}, {"$set": {"visit": True}})
+        # 更新paper信息中的pdf的文件路径
+        ACLAnthology.update_one({"pdfUrl": url}, {"$set": {"pdfPath": filePath}})
 
-    def addUrl(self,url):
+    def reset(self):
+        '''
+        所有的pdf url visit置false
+        :return:
+        '''
+        db = self.client[self.database]
+        col = db[self.collection]
+        col.update_many({}, {"$set": {"visit": False}})
+
+    def addUrl(self, url):
         '''
             加入待爬取的pdf的url
         :param url:
         :return:
         '''
-        if(url == ""):
+        if (url == ""):
             return
         db = self.client[self.database]
         col = db[self.collection]
@@ -73,7 +87,12 @@ class PDFManager():
                 pdfurlSplit = pdfurl.split("/")
                 fileName = pdfurlSplit[len(pdfurlSplit) - 1]
                 self.downloadFile(pdfurl, fileName)
-                self.updateUrl(pdfurl)
+                self.updateUrl(pdfurl, "/data/PDFs/" + fileName)
             except Exception as e:
                 lu.ErrorUrlManeger(pdfurl, e)
         print("PDF downloading done")
+
+
+if __name__ == '__main__':
+    pdfManager = PDFManager()
+    pdfManager.reset()

@@ -76,10 +76,6 @@ def downLoadVideo(url):
     videoUrl,suffix = getVideoUrl(url)
     # getThenSave(videoUrl,,suffix)
 
-
-
-
-
 if __name__ == '__main__':
     download(prepareUrls())
     # url_response("https://www.aclweb.org/anthology/P19-4000.pdf")

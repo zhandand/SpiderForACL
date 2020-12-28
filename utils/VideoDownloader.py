@@ -1,5 +1,8 @@
 import pymongo
 import requests
+from tqdm import tqdm
+
+import utils.LevelUrls as lu
 
 
 class VideoManager():
@@ -11,6 +14,8 @@ class VideoManager():
         self.database = "ACLAnthology"
         self.collection = "Video"
         self.client = pymongo.MongoClient("mongodb://localhost:27017/")
+        self.ACLAnthology = "ACLAnthology"
+        self.VideoUrl = self.getVideoUrlsfromDB()
 
     def getVideoUrlsfromDB(self):
         '''
@@ -35,7 +40,7 @@ class VideoManager():
             col.insert_one({"url": url, "visit": False})
         return
 
-    def updateUrl(self, url):
+    def updateUrl(self, url, filePath):
         '''
             已经爬过的pdf更新数据库的visit标记
         :param url:
@@ -43,7 +48,11 @@ class VideoManager():
         '''
         db = self.client[self.database]
         col = db[self.collection]
+        ACLAnthology = db[self.ACLAnthology]
+        # visit标记设为true
         col.update_one({"url": url}, {"$set": {"visit": True}})
+        # 更新paper信息中的video的文件路径
+        ACLAnthology.update_one({"pdfUrl": url}, {"$set": {"pdfPath": filePath}})
 
     def getVideoUrlFromVimeo(self, siteUrl):
         '''
@@ -77,12 +86,37 @@ class VideoManager():
         '''
         pass
 
-    def getVideoUrl(self,siteUrl):
-        if("slideslive" in siteUrl):
+    def getVideoUrl(self, siteUrl):
+        if ("slideslive" in siteUrl):
             videoUrl, suffix = self.getVideoUrlFromslideslive(siteUrl)
-        elif("vimeo" in siteUrl):
+        elif ("vimeo" in siteUrl):
             videoUrl, suffix = self.getVideoUrlFromVimeo(siteUrl)
 
+    def reset(self):
+        '''
+        所有的video url visit置false
+        :return:
+        '''
+        db = self.client[self.database]
+        col = db[self.collection]
+        col.update_many({}, {"$set": {"visit": False}})
+
+    def downloadVideo(self, url):
+        '''
+        根据视频网站的url 下载视频，并返回视频的文件名
+        :param url:
+        :return:
+        '''
+        # todo: 下载视频逻辑
+        return ""
+
     def run(self):
-        # todo:爬取论文逻辑
-        pass
+        pbar = tqdm(self.VideoUrl)
+        for videoUrl in pbar:
+            try:
+                pbar.set_description("Crawling %s" % videoUrl)
+                fileName = self.downloadVideo(videoUrl)
+                self.updateUrl(videoUrl, "/data/videos/" + fileName)
+            except Exception as e:
+                lu.ErrorUrlManeger(videoUrl, e)
+        print("videos downloading done")
