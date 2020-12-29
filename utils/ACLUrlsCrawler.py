@@ -2,8 +2,10 @@ import pymongo
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-
-import utils.LevelUrls as lu
+from config import *
+import pdb
+import os
+import LevelUrls as lu
 
 
 def log(str):
@@ -12,7 +14,12 @@ def log(str):
 
 
 class ACLUrlsCrawler:
+    database = db           # 爬取的url将要保存的数据库名
+    collection = "Urls"     # 爬取的url将要保存的表名
+    finishflag = "finish"   #爬取url结束后保存的表名，有内容表明可以直接从数据库中读，否则爬取url
+
     def __init__(self):
+        os.system('')
         self.baseUrl = "https://www.aclweb.org"
         '''
         约定 https://www.aclweb.org/anthology/ 为顶层
@@ -20,11 +27,10 @@ class ACLUrlsCrawler:
              https://www.aclweb.org/anthology/events/anlp-2000/ 为1级
              https://www.aclweb.org/anthology/A00-1000/ 为0级
         '''
-        self.database = "ACLAnthology"  # 爬取的url将要保存的数据库名
-
-        self.collection = "Urls"  # 爬取的url将要保存的表名
-        self.finishflag = "finish" #爬取url结束后保存的表名，有内容表明可以直接从数据库中读，否则爬取url
-        self.client = pymongo.MongoClient("mongodb://localhost:27017/")
+        self.client = pymongo.MongoClient(host = host,port = port,username = username,password = psw,authSource = self.database)
+        
+        # self.client = pymongo.MongoClient(host = host,port = 1029,username = username,password = psw,authSource = self.database)
+        # self.client.devsycredit.authenticate(username,psw,mechanism='MONGODB-CR')
 
     def getACLUrls(self):
         ACLUlrs = []
@@ -38,14 +44,19 @@ class ACLUrlsCrawler:
         print("urls downloading done")
         return ACLUlrs
 
-    def get_content(self, url):
+    def get_content(self, u):
         try:
-            user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 " \
-                         "Safari/537.36 "
-            response = requests.get(url, headers={'User-Agent': user_agent})
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"
+            response = requests.get(u, headers={'User-Agent': user_agent})
+            # pdb.set_trace()
             response.raise_for_status()  # 如果返回的状态码不是200， 则抛出异常;
             response.encoding = response.apparent_encoding  # 判断网页的编码格式， 便于respons.text知道如何解码;
+            
         except Exception as e:
+            # print('\033'+response+'\033')
+            # print("----------------")
+            # print(u)
+            # print("----------------")
             print("爬取错误")
         else:
             # print(response.url)
@@ -72,29 +83,53 @@ class ACLUrlsCrawler:
     def getUrlsfromSecondLevel(self, secondlevel: str):
         '''
         :param secondlevel: 2级url https://www.aclweb.org/anthology/venues/anlp/
+                                   https://www.aclweb.org/anthology/sigs/sigann/ 
+                                   以上两种处理方法略有不同
         :return:
-        '''
-        try:
-            content = self.get_content(secondlevel)
-            soup = BeautifulSoup(content, 'lxml')
-            paperAccordingToYear = soup.find_all(name="div", attrs={"class": "row"})
-            FirstLevelUrls = []
-            for paper in paperAccordingToYear:
-                yearUrl = paper.find(name="h4").find(name="a")['href']
-                FirstLevelUrls.append(self.baseUrl + yearUrl)
 
-            paperUrls = []
-            pbar = tqdm(FirstLevelUrls)
-            for FirstLevelUrl in pbar:
-                pbar.set_description("Crawling %s" % FirstLevelUrl)
-                partUrls = self.getUrlsfromFirstLevel(FirstLevelUrl)
-                log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
-                paperUrls += partUrls
-            # print(paperUrls)
-            return paperUrls
-        except Exception as e:
-            lu.ErrorUrlManeger(secondlevel,e)
-            return []
+        '''
+        paperUrls = []
+        FirstLevelUrls = []
+        if "venues" in secondlevel:
+            try:
+                content = self.get_content(secondlevel)
+                soup = BeautifulSoup(content, 'lxml')
+                paperAccordingToYear = soup.find_all(name="div", attrs={"class": "row"})
+                
+                for paper in paperAccordingToYear:
+                    yearUrl = paper.find(name="h4").find(name="a")['href']
+                    FirstLevelUrls.append(self.baseUrl + yearUrl)
+
+                pbar = tqdm(FirstLevelUrls)
+                for FirstLevelUrl in pbar:
+                    pbar.set_description("Crawling %s" % FirstLevelUrl)
+                    partUrls = self.getUrlsfromFirstLevel(FirstLevelUrl)
+                    log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
+                    paperUrls += partUrls
+                # print(paperUrls)
+                return paperUrls
+            except Exception as e:
+                lu.ErrorUrlManeger(secondlevel,e)
+                return []
+        elif "sigs" in secondlevel:
+            try:
+                content = self.get_content(secondlevel)
+                soup = BeautifulSoup(content, 'lxml')
+                a_s = soup.find_all(name = "a")
+                for a in a_s:
+                    if "volumes" in a['href']:
+                        FirstLevelUrls.append(self.baseUrl+a['href'])
+                pbar = tqdm(FirstLevelUrls)
+                for FirstLevelUrl in pbar:
+                    pbar.set_description("Crawling %s" % FirstLevelUrl)
+                    partUrls = self.getUrlsfromFirstLevel(FirstLevelUrl)
+                    log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
+                    paperUrls += partUrls
+                # print(paperUrls)
+                return paperUrls
+            except Exception as e:
+                lu.ErrorUrlManeger(secondlevel,e)
+                return []
 
     def getUrlsfromTopLevel(self, toplevel: str):
         '''
@@ -105,19 +140,38 @@ class ACLUrlsCrawler:
         SecondLevelUrls = []
         if secondLevelManager.getSecondLevelUrls() == None:
             content = self.get_content(toplevel)
-            print(content)
             soup = BeautifulSoup(content, 'lxml')
             tbodies = soup.find_all(name="tbody")
+            SIGsFLAG = False
             for tbody in tbodies:
                 for venue in tbody.find_all(name="th"):
                     try:
-                        # print(venue.find(name="a")['href'])
                         SecondLevelUrls.append(self.baseUrl + venue.find(name="a")['href'])
                     except Exception as e:
                         pass
+                
+                if(SIGsFLAG==False):
+                    trs = tbody.find_all(name = "tr")
+                    # print(trs)
+                    for tr in trs:
+                        try:
+                            tr = BeautifulSoup(str(tr), 'lxml')
+                            if(tr.find(name="th").text == "SIGs"):
+                                SIGsFLAG = True
+                            else:
+                                continue
+                            for a in tr.find_all(name="a"):
+                                SecondLevelUrls.append(self.baseUrl +a['href'])   
+                        except Exception as e:
+                            # print(tr)
+                            print(e)
+                            pass    
+                    
             secondLevelManager.saveSecondLevelUrls(SecondLevelUrls)
+
         else:
             SecondLevelUrls +=secondLevelManager.getSecondLevelUrls()
+
         paperUrls = []
 
         pbar = tqdm(SecondLevelUrls)
@@ -209,6 +263,9 @@ class ACLUrlsCrawler:
         col = db[self.collection]
         col.update_one({"url": url}, {"$set": {"visit": True}})
 
-# if __name__ == '__main__':
-#     aclscrawler = ACLUrlsCrawler()
-#     print(aclscrawler.getACLUrls())
+if __name__ == '__main__':
+    aclscrawler = ACLUrlsCrawler()
+    # print(aclscrawler.getACLUrls())
+    url = "https://www.aclweb.org/anthology/sigs/sigann/" 
+    print(aclscrawler.get_content(url))
+    

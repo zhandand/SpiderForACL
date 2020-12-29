@@ -1,20 +1,22 @@
 import pymongo
 import requests
 from tqdm import tqdm
-
-import utils.LevelUrls as lu
-
+from config import *
+import LevelUrls as lu
+from ContentDownloader import ContentManager
 
 class PDFManager():
     '''
     爬取论文pdf
     '''
+    database = db
+    collection = "PDF"
+    paper = ContentManager.collection
 
     def __init__(self):
-        self.database = "ACLAnthology"
-        self.collection = "PDF"
-        self.ACLAnthology = "ACLAnthology"
-        self.client = pymongo.MongoClient("mongodb://localhost:27017/")
+        # self.database = "ACLAnthology"
+       
+        self.client = pymongo.MongoClient(host = host,port = port,username = username,password = psw,authSource = self.database)
         self.pdfUrls = self.getPDFUrlsfromDB()
 
     def getPDFUrlsfromDB(self):

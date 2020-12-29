@@ -1,18 +1,20 @@
 import pymongo
 import requests
 from bs4 import BeautifulSoup
-
+from config import *
+from ACLUrlsCrawler import ACLUrlsCrawler
 
 class ContentManager():
     '''
     爬取论文的基本内容
     '''
+    database = db
+    collection = "basicInfo"
+    urlCollection = ACLUrlsCrawler.collection
 
     def __init__(self):
-        self.database = "ACLAnthology"
-        self.collection = "ACLAnthology"
-        self.urlCollection = "Urls"
-        self.client = pymongo.MongoClient("mongodb://localhost:27017/")
+        # self.database = database
+        self.client = pymongo.MongoClient(host = host,port = port,username = username,password = psw,authSource = self.database)
 
     def get_content(self,url):
         try:

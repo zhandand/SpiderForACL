@@ -1,20 +1,24 @@
 import pymongo
 import requests
 from tqdm import tqdm
-
-import utils.LevelUrls as lu
+from ContentDownloader import ContentManager
+import LevelUrls as lu
+import config
 
 
 class VideoManager():
     '''
     爬取论文视频
     '''
-
+    database =config.db
+    collection = "Video"
+    paper = ContentManager.collection
     def __init__(self):
-        self.database = "ACLAnthology"
-        self.collection = "Video"
-        self.client = pymongo.MongoClient("mongodb://localhost:27017/")
-        self.ACLAnthology = "ACLAnthology"
+        # self.database = "ACLAnthology"
+        # self.collection = "Video"
+        # self.client = pymongo.MongoClient("mongodb://localhost:27017/")
+        # self.ACLAnthology = "ACLAnthology"
+        self.client = pymongo.MongoClient(host = config.host,port = config.port,username = config.username,password =config.psw,authSource = self.database)
         self.VideoUrl = self.getVideoUrlsfromDB()
 
     def getVideoUrlsfromDB(self):
