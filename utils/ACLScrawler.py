@@ -4,6 +4,8 @@ from ACLUrlsCrawler import ACLUrlsCrawler
 from ContentDownloader import ContentManager
 from PDFDownloader import PDFManager
 from VideoDownloader import VideoManager
+from tqdm import tqdm
+import LevelUrls as lu
 
 
 class ACLScrawler:

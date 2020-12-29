@@ -4,7 +4,7 @@ from tqdm import tqdm
 from ContentDownloader import ContentManager
 import LevelUrls as lu
 import config
-
+import subprocess
 
 class VideoManager():
     '''
@@ -52,7 +52,7 @@ class VideoManager():
         '''
         db = self.client[self.database]
         col = db[self.collection]
-        ACLAnthology = db[self.ACLAnthology]
+        ACLAnthology = db[self.paper]
         # visit标记设为true
         col.update_one({"url": url}, {"$set": {"visit": True}})
         # 更新paper信息中的video的文件路径
@@ -90,11 +90,11 @@ class VideoManager():
         '''
         pass
 
-    def getVideoUrl(self, siteUrl):
-        if ("slideslive" in siteUrl):
-            videoUrl, suffix = self.getVideoUrlFromslideslive(siteUrl)
-        elif ("vimeo" in siteUrl):
-            videoUrl, suffix = self.getVideoUrlFromVimeo(siteUrl)
+    # def getVideoUrl(self, siteUrl):
+        # if ("slideslive" in siteUrl):
+        #     videoUrl, suffix = self.getVideoUrlFromslideslive(siteUrl)
+        # elif ("vimeo" in siteUrl):
+        #     videoUrl, suffix = self.getVideoUrlFromVimeo(siteUrl)
 
     def reset(self):
         '''
@@ -111,8 +111,38 @@ class VideoManager():
         :param url:
         :return:
         '''
-        # todo: 下载视频逻辑
-        return ""
+        videoName = ""
+        # TODO: 下载视频逻辑
+        if ("vimeo" in url):
+            videoUrlSplit = url.split("/")
+            videoName += videoUrlSplit[len(videoUrlSplit) - 1]
+
+            videoUrl, suffix = self.getVideoUrlFromVimeo(siteUrl)
+
+            r = requests.get(videoUrl, headers=headers,stream = True)
+            with open(videoName+"."+suffix,"wb") as f:
+                for chunk in tqdm(r.iter_content(chunk_size=1024*5)):
+                    if  chunk:
+                        f.write(chunk)
+            
+            return videoName+"."+suffix
+        elif ("slideslive" in url):
+            # 只能调用youtubde-dl下载，俺实在不会了呀orz...555
+            # cmdForName = "youtube-dl --get-filename -o '%(title)s%-%(id)s.%(ext)s' http://slideslive.com/38929437 --restrict-filenames"
+            cmdForName = "youtube-dl --get-filename -o '%(title)s%-%(id)s.%(ext)s'"+ url+" --restrict-filenames"
+            cmd = "youtube-dl "+url
+
+            download = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            download.wait()
+
+            getFileName = subprocess.Popen(cmdForName, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            getFileName.wait()
+
+            fileName = getFileName.stdout.read().decode('utf-8')
+            return fileName
+            # 处理ls的返回值
+
+        
 
     def run(self):
         pbar = tqdm(self.VideoUrl)

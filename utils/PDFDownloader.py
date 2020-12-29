@@ -52,7 +52,7 @@ class PDFManager():
         '''
         db = self.client[self.database]
         col = db[self.collection]
-        ACLAnthology = db[self.ACLAnthology]
+        ACLAnthology = db[self.paper]
         # visit标记设为true
         col.update_one({"url": url}, {"$set": {"visit": True}})
         # 更新paper信息中的pdf的文件路径

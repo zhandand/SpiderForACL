@@ -179,14 +179,15 @@ class ACLUrlsCrawler:
             pbar.set_description("Crawling %s" % secondLevelUrl)
             log("From " + secondLevelUrl + ":\n")
             partUrls = self.getUrlsfromSecondLevel(secondLevelUrl)
+            secondLevelManager.updateSecondLevelUrls(secondLevelUrl)
             if(len(partUrls) ==0):
                 continue
             self.saveUrls(partUrls)
             log("total paper :{length}\n".format(length = len(partUrls)))
-            secondLevelManager.updateSecondLevelUrls(secondLevelUrl)
+            
             paperUrls += partUrls
 
-        log("total paper in site:{length}\n".format(length=len(self.getACLUrls())))
+        log("total paper in site:{length}\n".format(length=len(self.getAllUrls())))
         self.finishFlag()
         # print("total:{}".foramt(len(paperUrls)))
         return paperUrls
