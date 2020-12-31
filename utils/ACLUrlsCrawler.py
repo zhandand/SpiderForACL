@@ -6,6 +6,8 @@ from config import *
 import pdb
 import os
 import LevelUrls as lu
+import sys
+
 
 
 def log(str):
@@ -86,7 +88,8 @@ class ACLUrlsCrawler:
                                    https://www.aclweb.org/anthology/sigs/sigann/ 
                                    以上两种处理方法略有不同
         :return:
-
+            成功返回 true,urls
+            出错返回 false,[]
         '''
         paperUrls = []
         FirstLevelUrls = []
@@ -107,10 +110,10 @@ class ACLUrlsCrawler:
                     log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
                     paperUrls += partUrls
                 # print(paperUrls)
-                return paperUrls
+                return True,paperUrls
             except Exception as e:
                 lu.ErrorUrlManeger(secondlevel,e)
-                return []
+                return False,[]
         elif "sigs" in secondlevel:
             try:
                 content = self.get_content(secondlevel)
@@ -126,10 +129,10 @@ class ACLUrlsCrawler:
                     log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
                     paperUrls += partUrls
                 # print(paperUrls)
-                return paperUrls
+                return True,paperUrls
             except Exception as e:
                 lu.ErrorUrlManeger(secondlevel,e)
-                return []
+                return False,[]
 
     def getUrlsfromTopLevel(self, toplevel: str):
         '''
@@ -178,10 +181,11 @@ class ACLUrlsCrawler:
         for secondLevelUrl in pbar:
             pbar.set_description("Crawling %s" % secondLevelUrl)
             log("From " + secondLevelUrl + ":\n")
-            partUrls = self.getUrlsfromSecondLevel(secondLevelUrl)
-            secondLevelManager.updateSecondLevelUrls(secondLevelUrl)
-            if(len(partUrls) ==0):
+            result,partUrls = self.getUrlsfromSecondLevel(secondLevelUrl)
+            if result==False:
                 continue
+            secondLevelManager.updateSecondLevelUrls(secondLevelUrl)
+           
             self.saveUrls(partUrls)
             log("total paper :{length}\n".format(length = len(partUrls)))
             

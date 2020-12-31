@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 from config import *
 from ACLUrlsCrawler import ACLUrlsCrawler
+import sys
+
 
 class ContentManager():
     '''
@@ -23,7 +25,7 @@ class ContentManager():
             response.raise_for_status()   # 如果返回的状态码不是200， 则抛出异常;
             response.encoding = response.apparent_encoding  # 判断网页的编码格式， 便于respons.text知道如何解码;
         except Exception as e:
-            print("爬取错误")
+            print(url + "   爬取错误")
         else:
             return  response.content
 

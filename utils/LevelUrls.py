@@ -67,9 +67,9 @@ class ErrorUrlManeger:
     '''
     database = db  # 爬取的url将要保存的数据库名
     collection = "errorUrl"  # 爬取的url将要保存的表名
-    def __init__(self,url,error):
+    def __init__(self,url):
         
         self.client = pymongo.MongoClient(host = host,port = port,username = username,password = psw,authSource = self.database)
         db = self.client[self.database]
         col = db[self.collection]
-        col.insert_one({"url":url,"error":error})
+        col.insert_one({"url":url})

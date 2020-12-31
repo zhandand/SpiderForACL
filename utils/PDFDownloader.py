@@ -88,10 +88,10 @@ class PDFManager():
                 pbar.set_description("Crawling %s" % pdfurl)
                 pdfurlSplit = pdfurl.split("/")
                 fileName = pdfurlSplit[len(pdfurlSplit) - 1]
-                self.downloadFile(pdfurl, fileName)
+                self.downloadFile(pdfurl, "./data/PDFs/"+fileName)
                 self.updateUrl(pdfurl, "/data/PDFs/" + fileName)
             except Exception as e:
-                lu.ErrorUrlManeger(pdfurl, e)
+                lu.ErrorUrlManeger(pdfurl)
         print("PDF downloading done")
 
 

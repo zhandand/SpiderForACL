@@ -6,6 +6,8 @@ from PDFDownloader import PDFManager
 from VideoDownloader import VideoManager
 from tqdm import tqdm
 import LevelUrls as lu
+import traceback
+import sys
 
 
 class ACLScrawler:
@@ -32,8 +34,9 @@ class ACLScrawler:
                 # 爬取数据后更新url visit字段
                 self.urlScrawler.updateUrl(url)
             except Exception as e:
-                lu.ErrorUrlManeger(url, e)
-
+                lu.ErrorUrlManeger(url)
+                continue
+        print("basic information downloading done")
         # todo
         # 爬取论文的pdf
         self.pdfManager.run()
