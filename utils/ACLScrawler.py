@@ -37,11 +37,11 @@ class ACLScrawler:
                 lu.ErrorUrlManeger(url)
                 continue
         print("basic information downloading done")
-        # todo
+        # TODO:
         # 爬取论文的pdf
         self.pdfManager.run()
         # # 爬取论文的视频
-        # self.videoManager.run()
+        self.videoManager.run()
 
 if __name__ == '__main__':
     aclscrawler = ACLScrawler()
