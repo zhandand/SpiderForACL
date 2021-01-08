@@ -1,5 +1,4 @@
 import sys
-sys.path.append('./utils/')
 from ACLUrlsCrawler import ACLUrlsCrawler
 from ContentDownloader import ContentManager
 from PDFDownloader import PDFManager
@@ -7,7 +6,7 @@ from VideoDownloader import VideoManager
 from tqdm import tqdm
 import LevelUrls as lu
 import traceback
-import sys
+sys.path.append('./utils/')
 
 
 class ACLScrawler:
@@ -18,8 +17,7 @@ class ACLScrawler:
         self.contenManager = ContentManager()
 
     def run(self):
-        # todo
-        #爬取论文的基本信息
+        # 爬取论文的基本信息
         urls = self.urlScrawler.getACLUrls()
         pbar = tqdm(urls)
         for url in pbar:
@@ -33,15 +31,15 @@ class ACLScrawler:
                 self.videoManager.addUrl(videoUrl)
                 # 爬取数据后更新url visit字段
                 self.urlScrawler.updateUrl(url)
-            except Exception as e:
+            except Exception:
                 lu.ErrorUrlManeger(url)
                 continue
         print("basic information downloading done")
-        # TODO:
         # 爬取论文的pdf
         self.pdfManager.run()
         # # 爬取论文的视频
         self.videoManager.run()
+
 
 if __name__ == '__main__':
     aclscrawler = ACLScrawler()

@@ -1,22 +1,27 @@
 import pymongo
 import requests
 from tqdm import tqdm
-from config import *
+import config
 import LevelUrls as lu
 from ContentDownloader import ContentManager
+
 
 class PDFManager():
     '''
     爬取论文pdf
     '''
-    database = db
+    database = config.db
     collection = "PDF"
     paper = ContentManager.collection
 
     def __init__(self):
         # self.database = "ACLAnthology"
-       
-        self.client = pymongo.MongoClient(host = host,port = port,username = username,password = psw,authSource = self.database)
+
+        self.client = pymongo.MongoClient(host=config.host,
+                                          port=config.port,
+                                          username=config.username,
+                                          password=config.psw,
+                                          authSource=self.database)
         self.pdfUrls = self.getPDFUrlsfromDB()
 
     def getPDFUrlsfromDB(self):
@@ -26,17 +31,19 @@ class PDFManager():
 
     def get_content(self, url):
         try:
-            user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36"
+            user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"\
+                " Chrome/59.0.3071.109 Safari/537.36"
             response = requests.get(url, headers={'User-Agent': user_agent})
             response.raise_for_status()  # 如果返回的状态码不是200， 则抛出异常;
             response.encoding = response.apparent_encoding  # 判断网页的编码格式， 便于respons.text知道如何解码;
-        except Exception as e:
+        except Exception:
             print("爬取错误")
         else:
             return response.content
 
-    def downloadFile(self,url, fileName):
-        user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36"
+    def downloadFile(self, url, fileName):
+        user_agent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)"\
+            " Chrome/59.0.3071.109 Safari/537.36"
         r = requests.get(url, headers={'User-Agent': user_agent}, stream=True)
         with open(fileName, "wb") as f:
             for chunk in r.iter_content(chunk_size=1024):
@@ -56,7 +63,10 @@ class PDFManager():
         # visit标记设为true
         col.update_one({"url": url}, {"$set": {"visit": True}})
         # 更新paper信息中的pdf的文件路径
-        ACLAnthology.update_one({"pdfUrl": url}, {"$set": {"pdfPath": filePath}})
+        ACLAnthology.update_one({"pdfUrl": url},
+                                {"$set": {
+                                    "pdfPath": filePath
+                                }})
 
     def reset(self):
         '''
@@ -77,8 +87,8 @@ class PDFManager():
             return
         db = self.client[self.database]
         col = db[self.collection]
-        if col.find_one({"url":url})==None:
-            col.insert_one({"url":url,"visit":False})
+        if col.find_one({"url": url}) is None:
+            col.insert_one({"url": url, "visit": False})
         return
 
     def run(self):
@@ -88,9 +98,9 @@ class PDFManager():
                 pbar.set_description("Crawling %s" % pdfurl)
                 pdfurlSplit = pdfurl.split("/")
                 fileName = pdfurlSplit[len(pdfurlSplit) - 1]
-                self.downloadFile(pdfurl, "./data/PDFs/"+fileName)
+                self.downloadFile(pdfurl, "./data/PDFs/" + fileName)
                 self.updateUrl(pdfurl, "/data/PDFs/" + fileName)
-            except Exception as e:
+            except Exception:
                 lu.ErrorUrlManeger(pdfurl)
         print("PDF downloading done")
 

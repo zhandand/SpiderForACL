@@ -2,12 +2,11 @@ import pymongo
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from config import *
 import pdb
 import os
+import config
 import LevelUrls as lu
 import sys
-
 
 
 def log(str):
@@ -16,9 +15,9 @@ def log(str):
 
 
 class ACLUrlsCrawler:
-    database = db           # 爬取的url将要保存的数据库名
-    collection = "Urls"     # 爬取的url将要保存的表名
-    finishflag = "finish"   #爬取url结束后保存的表名，有内容表明可以直接从数据库中读，否则爬取url
+    database = config.db  # 爬取的url将要保存的数据库名
+    collection = "Urls"  # 爬取的url将要保存的表名
+    finishflag = "finish"  # 爬取url结束后保存的表名，有内容表明可以直接从数据库中读，否则爬取url
 
     def __init__(self):
         os.system('')
@@ -29,16 +28,17 @@ class ACLUrlsCrawler:
              https://www.aclweb.org/anthology/events/anlp-2000/ 为1级
              https://www.aclweb.org/anthology/A00-1000/ 为0级
         '''
-        self.client = pymongo.MongoClient(host = host,port = port,username = username,password = psw,authSource = self.database)
-        
-        # self.client = pymongo.MongoClient(host = host,port = 1029,username = username,password = psw,authSource = self.database)
-        # self.client.devsycredit.authenticate(username,psw,mechanism='MONGODB-CR')
+        self.client = pymongo.MongoClient(host=config.host,
+                                          port=config.port,
+                                          username=config.username,
+                                          password=config.psw,
+                                          authSource=self.database)
 
     def getACLUrls(self):
         ACLUlrs = []
         if self.checkIfhasScrawl():
             # 已经爬取过，从数据库中获取未爬取过的url
-            ACLUlrs +=  self.getUnvisitedUrls()
+            ACLUlrs += self.getUnvisitedUrls()
         else:
             # 爬取所有论文的url并保存在数据库中
             print("start to crawl paper urls...")
@@ -48,13 +48,14 @@ class ACLUrlsCrawler:
 
     def get_content(self, u):
         try:
-            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36"
+            user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "\
+                "Chrome/77.0.3865.90 Safari/537.36"
             response = requests.get(u, headers={'User-Agent': user_agent})
             # pdb.set_trace()
             response.raise_for_status()  # 如果返回的状态码不是200， 则抛出异常;
             response.encoding = response.apparent_encoding  # 判断网页的编码格式， 便于respons.text知道如何解码;
-            
-        except Exception as e:
+
+        except Exception:
             # print('\033'+response+'\033')
             # print("----------------")
             # print(u)
@@ -72,21 +73,21 @@ class ACLUrlsCrawler:
         try:
             content = self.get_content(firstlevel)
             soup = BeautifulSoup(content, 'lxml')
-            papers = soup.find_all(name="p", attrs={"class": "align-items-stretch"})
+            papers = soup.find_all(name="p",
+                                   attrs={"class": "align-items-stretch"})
             paperUrls = []
             for paper in papers:
                 paperUrl = paper.find(name="strong").find("a")["href"]
                 paperUrls.append(self.baseUrl + paperUrl)
             return paperUrls
         except Exception as e:
-            lu.ErrorUrlManeger(firstlevel,e)
+            lu.ErrorUrlManeger(firstlevel, e)
             return []
 
     def getUrlsfromSecondLevel(self, secondlevel: str):
         '''
         :param secondlevel: 2级url https://www.aclweb.org/anthology/venues/anlp/
-                                   https://www.aclweb.org/anthology/sigs/sigann/ 
-                                   以上两种处理方法略有不同
+                                https://www.aclweb.org/anthology/sigs/sigann/ 两种url处理方法略有不同
         :return:
             成功返回 true,urls
             出错返回 false,[]
@@ -97,8 +98,9 @@ class ACLUrlsCrawler:
             try:
                 content = self.get_content(secondlevel)
                 soup = BeautifulSoup(content, 'lxml')
-                paperAccordingToYear = soup.find_all(name="div", attrs={"class": "row"})
-                
+                paperAccordingToYear = soup.find_all(name="div",
+                                                     attrs={"class": "row"})
+
                 for paper in paperAccordingToYear:
                     yearUrl = paper.find(name="h4").find(name="a")['href']
                     FirstLevelUrls.append(self.baseUrl + yearUrl)
@@ -107,32 +109,32 @@ class ACLUrlsCrawler:
                 for FirstLevelUrl in pbar:
                     pbar.set_description("Crawling %s" % FirstLevelUrl)
                     partUrls = self.getUrlsfromFirstLevel(FirstLevelUrl)
-                    log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
+                    log("\t" + FirstLevelUrl + ":" + str(len(partUrls)) + "\n")
                     paperUrls += partUrls
                 # print(paperUrls)
-                return True,paperUrls
+                return True, paperUrls
             except Exception as e:
-                lu.ErrorUrlManeger(secondlevel,e)
-                return False,[]
+                lu.ErrorUrlManeger(secondlevel, e)
+                return False, []
         elif "sigs" in secondlevel:
             try:
                 content = self.get_content(secondlevel)
                 soup = BeautifulSoup(content, 'lxml')
-                a_s = soup.find_all(name = "a")
+                a_s = soup.find_all(name="a")
                 for a in a_s:
                     if "volumes" in a['href']:
-                        FirstLevelUrls.append(self.baseUrl+a['href'])
+                        FirstLevelUrls.append(self.baseUrl + a['href'])
                 pbar = tqdm(FirstLevelUrls)
                 for FirstLevelUrl in pbar:
                     pbar.set_description("Crawling %s" % FirstLevelUrl)
                     partUrls = self.getUrlsfromFirstLevel(FirstLevelUrl)
-                    log("\t"+FirstLevelUrl + ":" + str(len(partUrls))+"\n")
+                    log("\t" + FirstLevelUrl + ":" + str(len(partUrls)) + "\n")
                     paperUrls += partUrls
                 # print(paperUrls)
-                return True,paperUrls
+                return True, paperUrls
             except Exception as e:
-                lu.ErrorUrlManeger(secondlevel,e)
-                return False,[]
+                lu.ErrorUrlManeger(secondlevel, e)
+                return False, []
 
     def getUrlsfromTopLevel(self, toplevel: str):
         '''
@@ -141,7 +143,7 @@ class ACLUrlsCrawler:
         '''
         secondLevelManager = lu.SecondLevelManager()
         SecondLevelUrls = []
-        if secondLevelManager.getSecondLevelUrls() == None:
+        if secondLevelManager.getSecondLevelUrls() is None:
             content = self.get_content(toplevel)
             soup = BeautifulSoup(content, 'lxml')
             tbodies = soup.find_all(name="tbody")
@@ -150,30 +152,30 @@ class ACLUrlsCrawler:
                 for venue in tbody.find_all(name="th"):
                     try:
                         SecondLevelUrls.append(self.baseUrl + venue.find(name="a")['href'])
-                    except Exception as e:
+                    except Exception:
                         pass
-                
-                if(SIGsFLAG==False):
-                    trs = tbody.find_all(name = "tr")
+
+                if (SIGsFLAG is False):
+                    trs = tbody.find_all(name="tr")
                     # print(trs)
                     for tr in trs:
                         try:
                             tr = BeautifulSoup(str(tr), 'lxml')
-                            if(tr.find(name="th").text == "SIGs"):
+                            if (tr.find(name="th").text == "SIGs"):
                                 SIGsFLAG = True
                             else:
                                 continue
                             for a in tr.find_all(name="a"):
-                                SecondLevelUrls.append(self.baseUrl +a['href'])   
+                                SecondLevelUrls.append(self.baseUrl + a['href'])
                         except Exception as e:
                             # print(tr)
                             print(e)
-                            pass    
-                    
+                            pass
+
             secondLevelManager.saveSecondLevelUrls(SecondLevelUrls)
 
         else:
-            SecondLevelUrls +=secondLevelManager.getSecondLevelUrls()
+            SecondLevelUrls += secondLevelManager.getSecondLevelUrls()
 
         paperUrls = []
 
@@ -181,17 +183,18 @@ class ACLUrlsCrawler:
         for secondLevelUrl in pbar:
             pbar.set_description("Crawling %s" % secondLevelUrl)
             log("From " + secondLevelUrl + ":\n")
-            result,partUrls = self.getUrlsfromSecondLevel(secondLevelUrl)
-            if result==False:
+            result, partUrls = self.getUrlsfromSecondLevel(secondLevelUrl)
+            if result is False:
                 continue
             secondLevelManager.updateSecondLevelUrls(secondLevelUrl)
-           
+
             self.saveUrls(partUrls)
-            log("total paper :{length}\n".format(length = len(partUrls)))
-            
+            log("total paper :{length}\n".format(length=len(partUrls)))
+
             paperUrls += partUrls
 
-        log("total paper in site:{length}\n".format(length=len(self.getAllUrls())))
+        log("total paper in site:{length}\n".format(
+            length=len(self.getAllUrls())))
         self.finishFlag()
         # print("total:{}".foramt(len(paperUrls)))
         return paperUrls
@@ -210,7 +213,7 @@ class ACLUrlsCrawler:
 
         Urls = []
         for url in urls:
-            if(url in urlsInDB):
+            if (url in urlsInDB):
                 # 去重
                 continue
             else:
@@ -226,7 +229,7 @@ class ACLUrlsCrawler:
         '''
         db = self.client[self.database]
         col = db[self.finishflag]
-        if (col.find_one() !=None):
+        if (col.find_one() is not None):
             return True
         else:
             return False
@@ -268,9 +271,9 @@ class ACLUrlsCrawler:
         col = db[self.collection]
         col.update_one({"url": url}, {"$set": {"visit": True}})
 
+
 if __name__ == '__main__':
     aclscrawler = ACLUrlsCrawler()
     # print(aclscrawler.getACLUrls())
-    url = "https://www.aclweb.org/anthology/sigs/sigann/" 
+    url = "https://www.aclweb.org/anthology/sigs/sigann/"
     print(aclscrawler.get_content(url))
-    
