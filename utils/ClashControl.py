@@ -11,6 +11,7 @@ class ClashControl:
     controller_port = "65117"
     proxy_port = "1717"
     proxyList = {}
+    current_proxy = ""
 
     def __init__(self):
         # process_list = []
@@ -74,7 +75,7 @@ class ClashControl:
         print("Get a random proxy from the proxy list: " + randomProxy)
         return randomProxy
 
-    def changeProxyByProxynamne(self, proxyName):
+    def changeProxyByProxyName(self, proxyName):
         if proxyName not in self.proxyList:
             print("Wrong proxy name.")
             return
@@ -86,18 +87,31 @@ class ClashControl:
         # print(api,payload,sep=', ')
         r = requests.put(api, headers=header, data=payload.encode('utf-8'))
         if r.status_code == 204:
-            ip_info = dict(requests.get("http://ip.gs/json").json())
+            clash_proxy = {
+                "http": "http://" + self.clash_host + ":" + self.proxy_port,
+                "https": "http://" + self.clash_host + ":" + self.proxy_port
+            }
+            ip_info = dict(requests.get("http://ip.gs/json").json(), proxies=clash_proxy)
             print("Change proxy to " + proxyName + " successfully, ip: " + ip_info["ip"] + ", location: " + ip_info[
                 "city"] + "," + ip_info["country"])
+            self.current_proxy = proxyName
             return True
         else:
             print("Error:", r.status_code, r.text)
             return False
 
+    def changeRandomAvailableProxy(self):
+        is_suc = False
+        while not is_suc:
+            proxyName = self.getRandomProxy()
+            if self.checkProxy(proxyName):
+                if self.changeProxyByProxyName(proxyName):
+                    is_suc = True
 
 if __name__ == '__main__':
     clashControl = ClashControl()
     # clashControl.getProxies()
-    randomProxy = clashControl.getRandomProxy()
-    if clashControl.checkProxy(randomProxy):
-        clashControl.changeProxyByProxynamne(randomProxy)
+    # randomProxy = clashControl.getRandomProxy()
+    # if clashControl.checkProxy(randomProxy):
+    #     clashControl.changeProxyByProxynamne(randomProxy)
+    clashControl.changeRandomAvailableProxy()
