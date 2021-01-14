@@ -157,7 +157,7 @@ class VideoManager():
             # pdb.set_trace()
             videoUrl, videoName = self.getVideoUrlFromVimeo(url)
             # jumpover
-            if videoUrl == None:
+            if videoUrl is None:
                 return None
             intab = "?*/\\|:><"
             for s in intab:
@@ -205,12 +205,12 @@ class VideoManager():
     def run(self):
         pbar = tqdm(self.VideoUrl)
 
-        count = 0 # change proxy per 20 videos
+        count = 0  # change proxy per 20 videos
         for videoUrl in pbar:
             pbar.set_description("Crawling %s" % videoUrl)
             fileName = self.downloadVideo(videoUrl)
-            #jumpover
-            if fileName == None:
+            # jumpover
+            if fileName is None:
                 print("No permission, pass this video")
                 continue
             # pdb.set_trace()
