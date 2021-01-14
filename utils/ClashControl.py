@@ -71,7 +71,7 @@ class ClashControl:
             return False
 
     def getRandomProxy(self):
-        randomProxy = self.proxyList[random.randint(0, len(clashControl.proxyList) - 1)]
+        randomProxy = self.proxyList[random.randint(0, len(self.proxyList) - 1)]
         print("Get a random proxy from the proxy list: " + randomProxy)
         return randomProxy
 
@@ -92,8 +92,12 @@ class ClashControl:
                 "https": "http://" + self.clash_host + ":" + self.proxy_port
             }
             ip_info = dict(requests.get("http://ip.gs/json").json(), proxies=clash_proxy)
-            print("Change proxy to " + proxyName + " successfully, ip: " + ip_info["ip"] + ", location: " + ip_info[
-                "city"] + "," + ip_info["country"])
+            if "city" in ip_info:
+                print("Change proxy to " + proxyName + " successfully, ip: " + ip_info["ip"] + ", location: " + ip_info[
+                    "city"] + "," + ip_info["country"])
+            else:
+                print("Change proxy to " + proxyName + " successfully, ip: " + ip_info["ip"] + ", location: " + ip_info[
+                    "country"])
             self.current_proxy = proxyName
             return True
         else:
@@ -107,6 +111,8 @@ class ClashControl:
             if self.checkProxy(proxyName):
                 if self.changeProxyByProxyName(proxyName):
                     is_suc = True
+                    return is_suc
+
 
 if __name__ == '__main__':
     clashControl = ClashControl()

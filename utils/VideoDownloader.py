@@ -1,3 +1,5 @@
+import time
+
 import pymongo
 import requests
 from tqdm import tqdm
@@ -18,6 +20,7 @@ class VideoManager():
     collection = "Video"
     paper = ContentManager.collection
     clashControl = ClashControl()
+    clash_proxy = {}
 
     def __init__(self):
         # self.database = "ACLAnthology"
@@ -30,6 +33,10 @@ class VideoManager():
                                           password=config.psw,
                                           authSource=self.database)
         self.VideoUrl = self.getVideoUrlsfromDB()
+        self.clash_proxy = {
+            "http": "http://" + self.clashControl.clash_host + ":" + self.clashControl.proxy_port,
+            "https": "http://" + self.clashControl.clash_host + ":" + self.clashControl.proxy_port
+        }
 
     def getVideoUrlsfromDB(self):
         '''
@@ -86,13 +93,18 @@ class VideoManager():
         headers = {
             "User-Agent":
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36",
-            "x-requested-with": "XMLHttpRequest"
+            "x-requested-with": "XMLHttpRequest",
         }
+        # jumpover
+        if "vimeo.com/28" in siteUrl:
+            return None, None
         r = requests.get(siteUrl + "?action=load_download_config",
-                         headers=headers)
+                         headers=headers, proxies=self.clash_proxy)
         print(siteUrl + "?action=load_download_config")
         videoUrls = []
         print(r.content)
+        if "display_message" in json.loads(r.content):
+            return None, None
         for file in json.loads(r.content)['files']:
             file_name = file['file_name']
             download_url = file["download_url"]
@@ -144,6 +156,9 @@ class VideoManager():
             # videoName += videoUrlSplit[len(videoUrlSplit) - 1]
             # pdb.set_trace()
             videoUrl, videoName = self.getVideoUrlFromVimeo(url)
+            # jumpover
+            if videoUrl == None:
+                return None
             intab = "?*/\\|:><"
             for s in intab:
                 if s in videoName:
@@ -153,11 +168,8 @@ class VideoManager():
                 "User-Agent":
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36",
             }
-            clash_proxy = {
-                "http": "http://" + self.clashControl.clash_host + ":" + self.clashControl.proxy_port,
-                "https": "http://" + self.clashControl.clash_host + ":" + self.clashControl.proxy_port
-            }
-            r = requests.get(videoUrl, headers=headers, proxies=clash_proxy, stream=True)
+
+            r = requests.get(videoUrl, headers=headers, proxies=self.clash_proxy, stream=True)
             # length = r.headers['content-length']
             # print(videoName+"."+suffix+"size: "+length)
 
@@ -197,6 +209,10 @@ class VideoManager():
         for videoUrl in pbar:
             pbar.set_description("Crawling %s" % videoUrl)
             fileName = self.downloadVideo(videoUrl)
+            #jumpover
+            if fileName == None:
+                print("No permission, pass this video")
+                continue
             # pdb.set_trace()
             self.updateUrl(videoUrl, "/data/videos/" + fileName)
             # try:
@@ -209,8 +225,10 @@ class VideoManager():
             # print(type(e)+":"+e)
             #     lu.ErrorUrlManeger(videoUrl)
             count = count + 1
-            if count > 20:
-                self.clashControl.changeRandomAvailableProxy()
+            if count > 10:
+                if self.clashControl.changeRandomAvailableProxy():
+                    count = 0
+                    time.sleep(15)
         print("videos downloading done")
 
 
