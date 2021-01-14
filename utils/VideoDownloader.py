@@ -142,7 +142,7 @@ class VideoManager():
             # videoName += videoUrlSplit[len(videoUrlSplit) - 1]
             # pdb.set_trace()
             videoUrl, videoName = self.getVideoUrlFromVimeo(url)
-            intab = "?*/\|:><"
+            intab = "?*/\\|:><"
             for s in intab:
                 if s in videoName:
                     videoName = videoName.replace(s, '')
@@ -154,7 +154,6 @@ class VideoManager():
             r = requests.get(videoUrl, headers=headers, stream=True)
             # length = r.headers['content-length']
             # print(videoName+"."+suffix+"size: "+length)
-
 
             with open("./data/videos/" + videoName, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1024 * 5):
