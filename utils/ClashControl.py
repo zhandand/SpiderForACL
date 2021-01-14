@@ -1,15 +1,15 @@
 # coding : utf - 8
 import json
 import random
-
+import config
 import requests
 import psutil
 
 
 class ClashControl:
-    clash_host = "127.0.0.1"
-    controller_port = "65117"
-    proxy_port = "1717"
+    clash_host = config.clash_host
+    controller_port = config.controller_port
+    proxy_port = config.proxy_port
     proxyList = {}
     current_proxy = ""
 
