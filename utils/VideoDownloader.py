@@ -2,6 +2,7 @@ import pymongo
 import requests
 from tqdm import tqdm
 from ContentDownloader import ContentManager
+from ClashControl import ClashControl
 import LevelUrls as lu
 import config
 import pdb
@@ -16,6 +17,7 @@ class VideoManager():
     database = config.db
     collection = "Video"
     paper = ContentManager.collection
+    clashControl = ClashControl()
 
     def __init__(self):
         # self.database = "ACLAnthology"
@@ -151,7 +153,11 @@ class VideoManager():
                 "User-Agent":
                 "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36",
             }
-            r = requests.get(videoUrl, headers=headers, stream=True)
+            clash_proxy = {
+                "http": "http://" + self.clashControl.clash_host + ":" + self.clashControl.proxy_port,
+                "https": "http://" + self.clashControl.clash_host + ":" + self.clashControl.proxy_port
+            }
+            r = requests.get(videoUrl, headers=headers, proxies=clash_proxy, stream=True)
             # length = r.headers['content-length']
             # print(videoName+"."+suffix+"size: "+length)
 
@@ -187,6 +193,7 @@ class VideoManager():
     def run(self):
         pbar = tqdm(self.VideoUrl)
 
+        count = 0 # change proxy per 20 videos
         for videoUrl in pbar:
             pbar.set_description("Crawling %s" % videoUrl)
             fileName = self.downloadVideo(videoUrl)
@@ -201,6 +208,9 @@ class VideoManager():
             #     print("error: "+videoUrl)
             # print(type(e)+":"+e)
             #     lu.ErrorUrlManeger(videoUrl)
+            count = count + 1
+            if count > 20:
+                self.clashControl.changeRandomAvailableProxy()
         print("videos downloading done")
 
 
