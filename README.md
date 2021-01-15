@@ -1,6 +1,5 @@
 # SpiderForACL
-spider for https://www.aclweb.org/anthology/  
-基于request+beautifulsoup开发，高效率爬取https://www.aclweb.org/anthology/  网站上的论文，支持爬取论文的基本信息，对应pdf和视频,支持增量式爬取,使用了代理和ip池的技术
+基于request+beautifulsoup开发，高效率爬取https://www.aclweb.org/anthology/  网站上的论文，支持爬取论文的基本信息，对应pdf和视频，支持增量式爬取，使用了代理和ip池等技术
 
 ## 统计信息
 paper 61462  
