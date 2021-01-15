@@ -40,7 +40,7 @@ ACLScrawler为顶层类，拥有ACLUrlsCrawler，ContentDownloader，PDFDownload
 ### ACLUrlsCrawler
   遍历网站https://www.aclweb.org/anthology/ 获取会议的url, 遍历会议的 url 例如，https://www.aclweb.org/anthology/venues/aacl/ ，遍历某一年会议的urlhttps://www.aclweb.org/anthology/events/aacl-2020/ ，最后将所有的待爬取的url存到表中，每一个url有一个visit标记
 ### ContentDownloader
-  遍历表中visit字段为false的url，爬取论文的基本内容并保存到表中，对于pdf和video字段不为零的数据，将待爬取的pdf和video的url保存到各自的表中，同样有一个visit标记。论文爬取完成后更新其url的visit字段
+  遍历表中visit字段为false的url，爬取论文的基本内容并保存到表中，对于pdf和video字段不为空的数据，将待爬取的pdf和video的url保存到各自的表中，同样有一个visit标记。论文爬取完成后更新其url的visit字段
 ### PDFDownloader
   遍历表中visit字段为false的url，爬取pdf并更新url的visit字段，同时在基本信息表中更新pdf的文件路径
 ### VideoDownloader
