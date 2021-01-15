@@ -1,12 +1,12 @@
 import sys
-from ACLUrlsCrawler import ACLUrlsCrawler
-from ContentDownloader import ContentManager
-from PDFDownloader import PDFManager
-from VideoDownloader import VideoManager
-from tqdm import tqdm
-import LevelUrls as lu
-import traceback
-sys.path.append('./utils/')
+sys.path.append('./utils/') # noqa
+from ACLUrlsCrawler import ACLUrlsCrawler # noqa
+from ContentDownloader import ContentManager # noqa
+from PDFDownloader import PDFManager # noqa
+from VideoDownloader import VideoManager # noqa
+from tqdm import tqdm # noqa
+import LevelUrls as lu # noqa
+import traceback # noqa
 
 
 class ACLScrawler:
